@@ -2,9 +2,7 @@
 # 
 # This class is part of the Programming the Internet of Things project.
 # 
-# It is provided as a simple shell to guide the student and assist with
-# implementation for the Programming the Internet of Things exercises,
-# and designed to be modified by the student as needed.
+# 
 #
 
 import logging
@@ -25,7 +23,9 @@ from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 
 class SystemPerformanceManager(object):
 	"""
-	Shell representation of class for student implementation.
+	This class will be used to control the system tools that will be required by the Constrained Device Application. 
+	It will be used to control the systemCpuUtil task and the SystemMemUtilTask classes. It is also tasked with invoking 
+	an apscheduler that will continuously update the system parameters that are being monitored.
 	
 	"""
 
@@ -45,10 +45,23 @@ class SystemPerformanceManager(object):
 		self.cpuUtilTask = SystemCpuUtilTask()
 		self.memUtilTask = SystemMemUtilTask()
 
+		
+
 		self._managerRunning = False
 
 	def handleTelemetry(self):
-		pass
+		self.cpuUtilTelemetry = self.cpuUtilTask.getTelemetryValue()
+		self.memUtilTelemetry = self.memUtilTask.getTelemetryValue()
+
+		logging.debug('CPU utilization is %s percent, and memory utilization is %s percent.', str(self.cpuUtilTelemetry), str(self.memUtilTelemetry))
+	
+		sysPerfData = SystemPerformanceData()
+		sysPerfData.setLocationID(self.locationID)
+		sysPerfData.setCpuUtilization(self.cpuUtilTelemetry)
+		sysPerfData.setMemoryUtilization(self.memUtilTelemetry)
+	
+		if (self.dataMsgListener):
+			self.dataMsgListener.handleSystemPerformanceMessage(data = sysPerfData)
 		
 	def setDataMessageListener(self, listener: IDataMessageListener) -> bool:
 		self.dataMsgListener = listener

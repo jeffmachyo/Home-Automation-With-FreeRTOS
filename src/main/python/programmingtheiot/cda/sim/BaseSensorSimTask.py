@@ -78,11 +78,11 @@ class BaseSensorSimTask():
 		"""
 		This can return the current SensorData instance or a copy.
 		"""
-		pass
+		return self.latestSensorData
 	
 	def getName(self) -> str:
-		pass
+		return self.name
 	
 	def getTypeID(self) -> int:
-		pass
+		return self.typeID
 	

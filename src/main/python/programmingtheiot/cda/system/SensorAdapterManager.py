@@ -34,26 +34,32 @@ class SensorAdapterManager(object):
 
 		self.useSimulatorConfig = configUtil.getBoolean(ConfigConst.CONSTRAINED_DEVICE,ConfigConst.ENABLE_SIMULATOR_KEY, False)
 		self.useEmulatorConfig = configUtil.getBoolean(ConfigConst.CONSTRAINED_DEVICE,ConfigConst.ENABLE_EMULATOR_KEY, False)
+		self.useSenseHatConfig = configUtil.getBoolean(ConfigConst.CONSTRAINED_DEVICE,ConfigConst.ENABLE_SENSE_HAT_KEY, False)
 
 		self.pollRate = configUtil.getInteger(section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.POLL_CYCLES_KEY, defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
 		self.locationID = configUtil.getProperty(section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
 
-		self.tempCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TEMP_SIM_CEILING_KEY, SensorDataGenerator.MAX_ENV_TEMP, False)
-		self.tempFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TEMP_SIM_FLOOR_KEY, SensorDataGenerator.MIN_ENV_TEMP, False)
+		if (self.useSimulatorConfig):
 
-		self.humidityCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HUMIDITY_SIM_CEILING_KEY,SensorDataGenerator.MAX_ENV_HUMIDITY, False)
-		self.humidityFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HUMIDITY_SIM_FLOOR_KEY, SensorDataGenerator.MIN_ENV_HUMIDITY, False)
+			self.tempCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TEMP_SIM_CEILING_KEY, SensorDataGenerator.MAX_ENV_TEMP, False)
+			self.tempFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TEMP_SIM_FLOOR_KEY, SensorDataGenerator.MIN_ENV_TEMP, False)
 
-		self.pressureCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.PRESSURE_SIM_CEILING_KEY, SensorDataGenerator.MAX_ENV_PRESSURE, False)
-		self.pressureFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.PRESSURE_SIM_FLOOR_KEY , SensorDataGenerator.MIN_ENV_PRESSURE, False)
+			self.humidityCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HUMIDITY_SIM_CEILING_KEY,SensorDataGenerator.MAX_ENV_HUMIDITY, False)
+			self.humidityFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.HUMIDITY_SIM_FLOOR_KEY, SensorDataGenerator.MIN_ENV_HUMIDITY, False)
+
+			self.pressureCeiling =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.PRESSURE_SIM_CEILING_KEY, SensorDataGenerator.MAX_ENV_PRESSURE, False)
+			self.pressureFloor =  configUtil.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.PRESSURE_SIM_FLOOR_KEY , SensorDataGenerator.MIN_ENV_PRESSURE, False)
+
 		
-		sensorDataGenerator = SensorDataGenerator(alignGeneratorToDay = True)
-	
-		self.tempData = sensorDataGenerator.generateDailyIndoorTemperatureDataSet(noiseLevel = 15, minValue = self.tempFloor, maxValue = self.tempCeiling,useSeconds = False)
-	
-		self.humidityData = sensorDataGenerator.generateDailyEnvironmentHumidityDataSet(noiseLevel = 10, minValue = self.humidityFloor, maxValue = self.humidityCeiling,useSeconds = False)
-	
-		self.pressureData = sensorDataGenerator.generateDailyEnvironmentPressureDataSet(noiseLevel = 1, minValue = self.pressureFloor, maxValue = self.pressureCeiling,useSeconds = False)
+			sensorDataGenerator = SensorDataGenerator(alignGeneratorToDay = True)
+		
+			self.tempData = sensorDataGenerator.generateDailyIndoorTemperatureDataSet(noiseLevel = 15, minValue = self.tempFloor, maxValue = self.tempCeiling,useSeconds = False)
+		
+			self.humidityData = sensorDataGenerator.generateDailyEnvironmentHumidityDataSet(noiseLevel = 10, minValue = self.humidityFloor, maxValue = self.humidityCeiling,useSeconds = False)
+		
+			self.pressureData = sensorDataGenerator.generateDailyEnvironmentPressureDataSet(noiseLevel = 1, minValue = self.pressureFloor, maxValue = self.pressureCeiling,useSeconds = False)
+
+
 		
 		if (self.pollRate <= 0):
 			logging.debug("The poll rate defined: "+str(self.pollRate)+" cannot be used here. Transitioning to default: "+str(ConfigConst.DEFAULT_POLL_CYCLES))
@@ -65,7 +71,6 @@ class SensorAdapterManager(object):
 		self.dataMsgListener = listener
 
 		
-		
 		self.humidityAdapter = None
 		self.pressureAdapter = None
 		self.tempAdapter     = None
@@ -73,18 +78,47 @@ class SensorAdapterManager(object):
 		self.scheduler = BackgroundScheduler()
 		self.scheduler.add_job(self.handleTelemetry, 'interval', seconds = self.pollRate)
 		self._managerRunning = False
-		
-		if self.useEmulatorConfig:
-			logging.info("Emulator use enabled..")
 
-		elif self.useSimulatorConfig:
+		#If we have enabled an emulator
+		if (self.useEmulatorConfig):
+			logging.info("Emulator use enabled..")
+			humiditySensorModule = import_module('programmingtheiot.cda.emulated.HumiditySensorEmulatorTask', 'HumiditySensorEmulatorTask')
+			humiditySensorEmulatorAdapter = getattr(humiditySensorModule, 'HumiditySensorEmulatorTask')
+			self.humidityAdapter = humiditySensorEmulatorAdapter()
+			
+			pressureSensorModule = import_module('programmingtheiot.cda.emulated.PressureSensorEmulatorTask', 'PressureSensorEmulatorTask')
+			pressureSensorEmulatorAdapter = getattr(pressureSensorModule, 'PressureSensorEmulatorTask')
+			self.pressureAdapter = pressureSensorEmulatorAdapter()
+			
+			temperatureSensorModule = import_module('programmingtheiot.cda.emulated.TemperatureSensorEmulatorTask', 'TemperatureSensorEmulatorTask')
+			temperatureSensorEmulatorAdapter = getattr(temperatureSensorModule, 'TemperatureSensorEmulatorTask')
+			self.tempAdapter = temperatureSensorEmulatorAdapter()
+
+		#If we have enabled a simulator
+		elif (self.useSimulatorConfig):
 			logging.info("Simulator use enabled...")
 			self.humidityAdapter = HumiditySensorSimTask(self.humidityData)
 			self.pressureAdapter = PressureSensorSimTask(self.pressureData)
 			self.tempAdapter     = TemperatureSensorSimTask(self.tempData)
 
+		#If we have enable the Physical SenseHAT
+		elif (self.useSenseHatConfig):
+			logging.info("Physical SenseHAT use enabled..")
+			humiditySensorModule = import_module('python.programmingtheiot.cda.embedded.HumidityI2cSensorAdapterTask', 'HumidityI2cSensorAdapterTask')
+			humiditySensorEmulatorAdapter = getattr(humiditySensorModule, 'HumidityI2cSensorAdapterTask')
+			self.humidityAdapter = humiditySensorEmulatorAdapter()
+			
+			pressureSensorModule = import_module('python.programmingtheiot.cda.embedded.PressureI2cSensorAdapterTask', 'PressureI2cSensorAdapterTask')
+			pressureSensorEmulatorAdapter = getattr(pressureSensorModule, 'PressureI2cSensorAdapterTask')
+			self.pressureAdapter = pressureSensorEmulatorAdapter()
+			
+			temperatureSensorModule = import_module('python.programmingtheiot.cda.embedded.TemperatureI2cSensorAdapterTask', 'TemperatureI2cSensorAdapterTask')
+			temperatureSensorEmulatorAdapter = getattr(temperatureSensorModule, 'TemperatureI2cSensorAdapterTask')
+			self.tempAdapter = temperatureSensorEmulatorAdapter()
+
+
 		else:
-			logging.warn("No simulator or emulator enabled...")
+			logging.warning("No simulator, emulator or physical senseHAT enabled...")
 		
 
 	def handleTelemetry(self):
@@ -96,7 +130,7 @@ class SensorAdapterManager(object):
 		pressureData.setLocationID(self.locationID)
 		tempData.setLocationID(self.locationID)
 		
-		logging.debug('Generated humidity data: ' + str(humidityData))
+		logging.debug('Generated humidity data: '+ str(humidityData))
 		logging.debug('Generated pressure data: ' + str(pressureData))
 		logging.debug('Generated temp data: ' + str(tempData))
 		

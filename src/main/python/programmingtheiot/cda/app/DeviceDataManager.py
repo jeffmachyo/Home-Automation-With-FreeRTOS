@@ -2,10 +2,7 @@
 # 
 # This class is part of the Programming the Internet of Things project.
 # 
-# It is provided as a simple shell to guide the student and assist with
-# implementation for the Programming the Internet of Things exercises,
-# and designed to be modified by the student as needed.
-#
+# 
 
 import logging
 
@@ -16,6 +13,7 @@ from programmingtheiot.common.ConfigUtil import ConfigUtil
 
 from programmingtheiot.cda.connection.CoapClientConnector import CoapClientConnector
 from programmingtheiot.cda.connection.MqttClientConnector import MqttClientConnector
+from programmingtheiot.cda.connection.RedisPersistenceAdapter import RedisPersistenceAdapter
 
 from programmingtheiot.cda.system.ActuatorAdapterManager import ActuatorAdapterManager
 from programmingtheiot.cda.system.SensorAdapterManager import SensorAdapterManager
@@ -34,7 +32,7 @@ from programmingtheiot.data.DataUtil import DataUtil
 
 class DeviceDataManager(IDataMessageListener):
 	"""
-	Shell representation of class for student implementation.
+	This class serves to co-ordinate the functions of various sub-classes in the system.
 	
 	"""
 	
@@ -50,6 +48,8 @@ class DeviceDataManager(IDataMessageListener):
 		self.triggerHvacTempFloor = self.configs.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_FLOOR_KEY)
 		self.triggerHvacTempCeiling = self.configs.getFloat(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY)
 
+		self.enableLocalStorage = self.configs.getBoolean(ConfigConst.CONSTRAINED_DEVICE,ConfigConst.ENABLE_LOCAL_STORAGE_KEY, False)
+
 		self.systemPerformanceMgrInstance = None
 		self.actuatorAdapterMgrInstance = None
 		self.sensorAdapterMgrInstance = None
@@ -57,8 +57,11 @@ class DeviceDataManager(IDataMessageListener):
 		self.mqttClient         = None
 		self.coapClient         = None
 		self.coapServer         = None
+		self.redisClient        = None
 
 		self.actuatorResponseCache = {}
+		if (self.enableLocalStorage):
+			self.redisClient = RedisPersistenceAdapter()
 
 		if (self.enableSysPerformance):
 			self.systemPerformanceMgrInstance = SystemPerformanceManager(listener=self)
@@ -176,6 +179,9 @@ class DeviceDataManager(IDataMessageListener):
 		"""
 		if data:
 			logging.debug("Incoming sensor data received (from sensor manager): " + str(data))
+			if (self.redisClient is not None):
+				resource = ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE
+				res = self.redisClient.storeData(resource,data)
 			self._handleSensorDataAnalysis(data)
 			return True
 		else:
@@ -217,6 +223,11 @@ class DeviceDataManager(IDataMessageListener):
 			self.sensorAdapterMgrInstance.startManager()
 		else:
 			logging.info("No SensorAdapterManager instance is available")
+		
+		if self.redisClient:
+			self.redisClient.connectClient()
+		else:
+			logging.info("No RedisPersistenceAdapter instance is available")
 
 		logging.info("Successfuly started DeviceDataManager...")
 		

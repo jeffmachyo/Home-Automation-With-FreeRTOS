@@ -2,10 +2,7 @@
 # 
 # This class is part of the Programming the Internet of Things project.
 # 
-# It is provided as a simple shell to guide the student and assist with
-# implementation for the Programming the Internet of Things exercises,
-# and designed to be modified by the student as needed.
-#
+# 
 
 import logging
 import psutil
@@ -15,7 +12,9 @@ import programmingtheiot.common.ConfigConst as ConfigConst
 
 class SystemCpuUtilTask(BaseSystemUtilTask):
 	"""
-	Shell representation of class for student implementation.
+	This class is used to conduct the function of system monitoring and therefore obtaining current system 
+	parameters. In this case, the CPU percentage is the parameter being monitored and this is facilitated 
+	by the psutil library.
 	
 	"""
 	def __init__(self):

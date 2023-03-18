@@ -8,12 +8,21 @@
 #
 
 #
+# Persistence client configuration information
+#
+[Data.GatewayService]
+credFile = ./cred/PiotPersistenceCred.props
+host = 10.42.0.1
+port = 6379
+enableCrypt = False
+
+#
 # MQTT client configuration information
 #
 [Mqtt.GatewayService]
 credFile       = ./cred/PiotMqttLocalCred.props
 certFile       = ./cert/PiotMqttLocalCertFile.pem
-host           = localhost
+host           = 10.42.0.84
 port           = 1883
 securePort     = 8883
 defaultQoS     = 0
@@ -38,8 +47,8 @@ enableCrypt    = False
 #
 [ConstrainedDevice]
 deviceLocationID = constraineddevice001
-enableSimulator = True
-enableEmulator   = False
+enableSimulator = False
+enableEmulator   = True
 enableSenseHAT   = False
 enableMqttClient = False
 enableCoapServer = False
@@ -52,6 +61,7 @@ pollCycleSecs    = 5
 testGdaDataPath  = /tmp/gda-data
 testCdaDataPath  = /tmp/cda-data
 testEmptyApp     = False
+enableLocalStorage = True
 
 # configurable limits for sensor simulation
 humiditySimFloor   =   35.0
