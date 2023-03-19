@@ -14,7 +14,7 @@ python3 src/test/python/programmingtheiot/part01/integration/system/SystemPerfor
 python3 src/test/python/programmingtheiot/part02/integration/embedded/HumidityI2cSensorAdapterTaskTest.py
 python3 src/test/python/programmingtheiot/part02/integration/embedded/PressureI2cSensorAdapterTaskTest.py
 python3 src/test/python/programmingtheiot/part02/integration/embedded/TemperatureI2cSensorAdapterTaskTest.py
-# python3 src/test/python/programmingtheiot/part01/integration/system/SystemPerformanceManagerTest.py
+python3 src/test/python/programmingtheiot/part02/integration/system/ActuatorAdapterManagerTest.py
 # python3 src/test/python/programmingtheiot/part01/integration/system/SystemPerformanceManagerTest.py
 # python3 src/test/python/programmingtheiot/part01/integration/system/SystemPerformanceManagerTest.py
 
