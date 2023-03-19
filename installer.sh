@@ -5,4 +5,5 @@ export PYTHONPATH="/var/lib/jenkins/workspace/Home Automation Python Build And T
 # cmake -S . -B out/build
 # make -C out/build
 python3 src/test/python/programmingtheiot/part01/unit/system/SystemCpuUtilTaskTest.py
+python3 src/test/python/programmingtheiot/part01/unit/system/SystemMemUtilTaskTest.py
 echo $PYTHONPATH
